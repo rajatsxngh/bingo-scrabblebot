@@ -4,6 +4,9 @@
 .env
 .env.*
 
+# Runtime switches (lobby, tournament, brain); the bot creates it on first run.
+control.json
+
 node_modules/
 dist/
 logs/
