@@ -310,6 +310,7 @@ interface Brain {
 
 **Depends on:** M9.
 
+- Make the repo public first. It's private until then so rivals can't read the plan, but it has to be public to qualify. Run `gh repo edit rajatsxngh/bingo-scrabblebot --visibility public --accept-visibility-change-consequences`. If the booth says it must be public sooner, do it then.
 - When tonight's `tournament` row shows the Registration status, set `tournamentId` in `control.json`. Confirm the bot appears on the tournament page and in `tournament_entry`.
 - By 10:30pm, set `lobby: off`. The bot finishes its current match, then stays connected and idle. The admin can't start the tournament while a registered bot is mid-match.
 - During play, watch the logs for phase switches (Swiss, then Bracket, then Final params), missed auctions and reconnects. Touch only the frozen build: restart it, or switch to the standby.

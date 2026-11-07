@@ -1,0 +1,35 @@
+{
+  "tracker": {
+    "priceAlpha": 0.25
+  },
+  "evaluator": {
+    "targetWeights": [1, 0.5, 0.25],
+    "maxDeficit": 5,
+    "duplicatePenalty": 1,
+    "vowelPenalty": 1,
+    "winRatePrior": 0.3,
+    "winRatePriorWeight": 5
+  },
+  "pacing": {
+    "lambdaMax": 3,
+    "rampDownAuctions": 10,
+    "reserveLetters": 3
+  },
+  "bidding": {
+    "minBid": 1,
+    "firstPriceMargin": 1
+  },
+  "planner": {
+    "cashThreshold": 0,
+    "endgameLookahead": 3
+  },
+  "safety": {
+    "fallbackMs": 150,
+    "slowDecisionMs": 300
+  },
+  "phases": {
+    "swiss": {},
+    "bracket": {},
+    "final": {}
+  }
+}
