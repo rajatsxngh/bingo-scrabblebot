@@ -1,0 +1,2 @@
+# Same line endings on Windows laptops and a Linux host.
+* text=auto eol=lf

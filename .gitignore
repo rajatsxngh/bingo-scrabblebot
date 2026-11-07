@@ -1,0 +1,10 @@
+# Bot tokens. The bot saves its token to .token-<BOT_NAME>. Never commit these:
+# the repo has to be public to qualify.
+.token-*
+.env
+.env.*
+
+node_modules/
+dist/
+logs/
+*.log
