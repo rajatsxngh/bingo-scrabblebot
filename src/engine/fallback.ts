@@ -34,7 +34,7 @@ export class FallbackBrain implements Brain {
 
   bidTable(s: Readonly<GameState>): Int32Array {
     const table = new Int32Array(NUM_LETTERS);
-    if (s.ended || s.auctionsLeft <= 1) return table;
+    if (s.ended || s.auctionsLeft <= 1 || s.coins < 1) return table;
     let vowels = 0;
     for (let l = 0; l < NUM_LETTERS; l++) if (IS_VOWEL[l]) vowels += s.rack[l]!;
     const tiles = s.rackTiles;
@@ -58,7 +58,7 @@ export class FallbackBrain implements Brain {
         else if (vowels * 2 > tiles + 1) want *= 0.5;
       }
       if (l === Q && s.rack[U] === 0) want *= 0.3;
-      table[l] = Math.max(1, Math.min(cap, Math.round(want)));
+      table[l] = Math.min(s.coins, Math.max(1, Math.min(cap, Math.round(want))));
     }
     return table;
   }

@@ -200,6 +200,8 @@ interface Brain {
 - It matches live play: sim bots average 3–23, as on the leaderboard. A table of top-bot copies prices 1-point letters near the 9–12 coins seen in match #42697. Our starter scores about what it did live in M1.
 - If M3 is done, the fallback brain's numbers are recorded as the baseline.
 
+**Result (Nov 7, ~7pm):** [docs/sim-baseline.md](docs/sim-baseline.md). Prices match live within about 10% for letters worth up to 5 points, and 8–10 point letters sell at 74% of the live price. The simulator is easier than the live field for the fallback (about 2× its live score), so compare brains against each other in the same table. Head to head, the fallback loses to the k13 copy 24–481, so the final needs its own mode (M7). The starter wasn't run live long enough to compare.
+
 ## M5 — Rack evaluator: what each letter is worth
 
 **Goal:** v(L) = V(R ∪ {L}) − V(R) for all 26 letters, fast and sensible. Every bid and word decision is built on this.

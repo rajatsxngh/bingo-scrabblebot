@@ -36,7 +36,11 @@ export interface WordSet {
   readonly start: Uint32Array;
   readonly letters: Uint8Array;
   readonly mult: Uint8Array;
+  /** letter × 16 + count for each sparse entry: one lookup per entry in `deficits`. */
+  readonly codes: Uint16Array;
 }
+
+const CODE_STRIDE = 16;
 
 export interface WordIndex {
   /** 7–10 letter words. */
@@ -45,17 +49,28 @@ export interface WordIndex {
   readonly short: WordSet;
   /** Every word in the list, any length. */
   readonly totalWords: number;
+  /** All the words (2+ letters, any length), uppercase, in list order. */
+  readonly allWords: readonly string[];
   /** Whether the module accepts `word`: 2+ letters and in the list (any case). */
   isWord(word: string): boolean;
 }
 
-function buildSet(words: readonly string[]): WordSet {
+const alpha = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * Builds a WordSet. "reward" order: best reward first, then fewest tiles,
+ * then A–Z. "length" order: longest first, then A–Z, which is the order the
+ * module's findBestPlayable scans in.
+ */
+export function buildWordSet(
+  words: readonly string[],
+  order: "reward" | "length" = "reward",
+): WordSet {
   const items = words.map((w) => ({ w, r: wordReward(w) }));
   items.sort(
-    (a, b) =>
-      b.r - a.r ||
-      a.w.length - b.w.length ||
-      (a.w < b.w ? -1 : a.w > b.w ? 1 : 0),
+    order === "reward"
+      ? (a, b) => b.r - a.r || a.w.length - b.w.length || alpha(a.w, b.w)
+      : (a, b) => b.w.length - a.w.length || alpha(a.w, b.w),
   );
   const size = items.length;
   const counts = new Uint8Array(size * NUM_LETTERS);
@@ -76,6 +91,7 @@ function buildSet(words: readonly string[]): WordSet {
   const start = new Uint32Array(size + 1);
   const letters = new Uint8Array(distinct);
   const mult = new Uint8Array(distinct);
+  const codes = new Uint16Array(distinct);
   let p = 0;
   for (let i = 0; i < size; i++) {
     start[i] = p;
@@ -85,13 +101,14 @@ function buildSet(words: readonly string[]): WordSet {
       if (c > 0) {
         letters[p] = l;
         mult[p] = c;
+        codes[p] = l * CODE_STRIDE + Math.min(c, CODE_STRIDE - 1);
         p++;
       }
     }
   }
   start[size] = p;
   const sorted = items.map((x) => x.w);
-  return { size, words: sorted, counts, reward, length, start, letters, mult };
+  return { size, words: sorted, counts, reward, length, start, letters, mult, codes };
 }
 
 /** Builds the index from word-list lines (any case; blank lines ignored). */
@@ -107,9 +124,10 @@ export function buildWordIndex(lines: Iterable<string>): WordIndex {
     else if (w.length <= LONG_MAX) long.push(w);
   }
   return {
-    long: buildSet(long),
-    short: buildSet(short),
+    long: buildWordSet(long),
+    short: buildWordSet(short),
     totalWords: all.size,
+    allWords: [...all],
     isWord: (word) => all.has(word.toUpperCase()),
   };
 }
@@ -166,17 +184,23 @@ export function missingLetters(
   return need;
 }
 
-/** One pass over the whole set: out[i] = how many tiles word i still needs. */
+/**
+ * One pass over the whole set: out[i] = how many tiles word i still needs.
+ * The hot path for the evaluator: a per-rack table gives what each
+ * (letter, count) entry is short by, so the loop is one lookup per entry.
+ */
 export function deficits(set: WordSet, rack: Counts, out: Uint8Array): void {
-  const { start, letters, mult } = set;
+  const cost = new Uint8Array(NUM_LETTERS * CODE_STRIDE);
+  for (let l = 0; l < NUM_LETTERS; l++) {
+    const have = rack[l]!;
+    for (let m = have + 1; m < CODE_STRIDE; m++) cost[l * CODE_STRIDE + m] = m - have;
+  }
+  const { start, codes } = set;
   let p = 0;
   for (let i = 0; i < set.size; i++) {
     const end = start[i + 1]!;
     let need = 0;
-    for (; p < end; p++) {
-      const d = mult[p]! - rack[letters[p]!]!;
-      if (d > 0) need += d;
-    }
+    for (; p < end; p++) need += cost[codes[p]!]!;
     out[i] = need;
   }
 }

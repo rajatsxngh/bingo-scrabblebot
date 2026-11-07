@@ -39,12 +39,29 @@ While the bot runs, edit `control.json` (created on first run, and ignored by gi
 
 `logs/bingo-<date>.jsonl` has a line per auction (letter, our bid, winner, price) and a summary per match (score, place, coins left, missed auctions, rejected calls, p99 decision time). Anything that needs a look is written as a `flag` line.
 
+## Simulator
+
+```bash
+npm run sim -- --table bingo,bron,k13,tileshark,starter,sim --matches 1000
+npm run sim -- --table bingo,k13 --matches 1000
+npm run sim -- --type first --seed 7 --workers 4 --json out.json
+```
+
+The second command plays head to head. The players are:
+- `bingo`: Bingo's best brain so far.
+- `fallback`.
+- `starter`.
+- `sim`: one of the module's three sim bots, picked at random. `cheap`, `value` and `aggro` pick a specific one.
+- `bron`, `k13` and `tileshark`.
+
+The same seed gives the same results, however many workers run. [docs/sim-baseline.md](docs/sim-baseline.md) has the calibration against live play and the baseline numbers.
+
 ## Layout
 
 - `src/core/`: the game rules, word index and state tracker, shared by the bot and the simulator
 - `src/bot/`: the live bot: connection, the match session (event ordering, bids, words), control file, logs, and the generated SpacetimeDB bindings
 - `src/engine/`: brains. So far only the fallback; the evaluator and Bingo v1 come in M5–M6.
-- `src/sim/`: the simulator (M4)
+- `src/sim/`: the simulator. It's a rule-for-rule copy of the module's game with an opponent pool: the module's sim bots and the starter, copied exactly, plus copies of Bron, K-13 and TileShark modelled on live matches. See below.
 - `config/params.json`: every tunable
 - `data/wordlist.txt`: the module's word list (172,820 words)
 - `test/`: tests

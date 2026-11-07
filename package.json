@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "tsx src/bot/index.ts",
+    "sim": "node --import tsx src/sim/run.ts",
     "test": "node --import tsx --test \"test/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
