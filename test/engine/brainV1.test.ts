@@ -97,3 +97,12 @@ test("pricier letters may take a bigger share of the coins (tierAllowance)", () 
   // 1-point letters are unchanged.
   assert.equal(new BingoV1(index, tiered).bidTable(s)[L("E")], new BingoV1(index, flat).bidTable(s)[L("E")]);
 });
+
+test("slack spending: with far more coins than the rest of the match needs, bids scale up", () => {
+  const off = { ...params, pacing: { ...params.pacing, slackShare: 0 } };
+  const on = { ...params, pacing: { ...params.pacing, slackShare: 0.2, slackMaxBoost: 1.5 } };
+  // 30 auctions left, 100 coins: need is about 30 × 0.2 × 10 = 60 coins, so the boost is 1.5.
+  const s = stateAfter(37, "AEINST", 100);
+  const sum = (t: Int32Array) => t.reduce((a, b) => a + b, 0);
+  assert.ok(sum(new BingoV1(index, on, "swiss").bidTable(s)) > sum(new BingoV1(index, off, "swiss").bidTable(s)));
+});

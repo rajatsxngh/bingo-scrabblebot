@@ -46,6 +46,15 @@ export interface Params {
      * letters, losing them by 8–12 coins, though its best games were built on them.
      */
     tierAllowance: number[];
+    /**
+     * Spend down excess coins: the coins we'd need for the rest of the match
+     * are auctions left × this share (the auctions we expect to win) × the
+     * average price. Holding more than that makes a coin worth less, so bids
+     * scale up by coins ÷ need, at most `slackMaxBoost`. 0 = off. Live, the
+     * worst games won 6–9 letters and still finished with 37–66 coins.
+     */
+    slackShare: number;
+    slackMaxBoost: number;
   };
   bidding: {
     /** Least bid on any letter with value (unsold letters vanish). */
@@ -99,7 +108,7 @@ const SHAPE: Shape = {
     winRatePriorWeight: "number",
     coinValue: "number",
   },
-  pacing: { lambdaMax: "number", rampDownAuctions: "number", reserveLetters: "number", spreadOver: "number", tierAllowance: "numbers" },
+  pacing: { lambdaMax: "number", rampDownAuctions: "number", reserveLetters: "number", spreadOver: "number", tierAllowance: "numbers", slackShare: "number", slackMaxBoost: "number" },
   bidding: { minBid: "number", firstPriceMargin: "number", contestFloor: "number" },
   planner: { cashThreshold: "number", endgameLookahead: "number" },
   safety: { fallbackMs: "number", slowDecisionMs: "number" },

@@ -68,6 +68,22 @@ export class BingoV1 implements Brain {
         ? s.coins
         : Math.floor(s.coins * Math.min(1, (p.pacing.spreadOver * (p.pacing.tierAllowance[tier] ?? 1)) / left));
 
+    // Excess coins are worth less: if we hold more than the rest of the match
+    // needs (auctions left × the share we expect to win × the average price),
+    // scale bids up by coins ÷ need, at most slackMaxBoost.
+    let boost = 1;
+    if (p.pacing.slackShare > 0) {
+      let sold = 0;
+      let paid = 0;
+      for (let tr = 0; tr < 4; tr++) {
+        sold += s.prices.count[tr]!;
+        paid += s.prices.sum[tr]!;
+      }
+      const avgPrice = sold >= 5 ? paid / sold : 12;
+      const need = Math.max(1, left * p.pacing.slackShare * avgPrice);
+      boost = Math.min(p.pacing.slackMaxBoost, Math.max(1, s.coins / need));
+    }
+
     let firstPriceCap = Number.POSITIVE_INFINITY;
     if (s.settings.auctionType === "FirstPrice") {
       let richest = 0;
@@ -79,11 +95,11 @@ export class BingoV1 implements Brain {
       const tier = TIER_OF[l]!;
       const cap = capFor(tier);
       const recent = s.prices.count[tier]! >= 3 ? s.prices.ema[tier]! : 0;
-      const fromValue = Math.min(cap, Math.round(values[l]! / mu));
+      const fromValue = Math.min(cap, Math.round((values[l]! * boost) / mu));
       let bid = Math.max(base[l]!, fromValue);
       // Contest anything worth having at a fair share of the going price.
       if (p.bidding.contestFloor > 0 && values[l]! > 0) {
-        bid = Math.max(bid, Math.min(cap, Math.round(recent * p.bidding.contestFloor)));
+        bid = Math.max(bid, Math.min(cap, Math.round(recent * p.bidding.contestFloor * boost)));
       }
       if (s.settings.auctionType === "FirstPrice") {
         // Paying our own bid: never more than needed to beat everyone who could bid.

@@ -16,7 +16,9 @@
     "rampDownAuctions": 10,
     "reserveLetters": 3,
     "spreadOver": 20,
-    "tierAllowance": [1, 1.2, 1.6, 2.4]
+    "tierAllowance": [1, 1.2, 1.6, 2.4],
+    "slackShare": 0,
+    "slackMaxBoost": 1.5
   },
   "bidding": {
     "minBid": 1,
@@ -37,7 +39,9 @@
     "final": {
       "pacing": {
         "spreadOver": 30,
-        "tierAllowance": [1, 1, 1, 1]
+        "tierAllowance": [1, 1, 1, 1],
+        "slackShare": 0.2,
+        "slackMaxBoost": 1.5
       },
       "bidding": {
         "contestFloor": 1
