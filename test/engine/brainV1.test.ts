@@ -85,3 +85,15 @@ test("phase switching: 2-bot tables play as the final, a live phase overrides, S
   assert.equal(new BingoV1(index, tuned, "final").phaseParams(sixBot).bidding.contestFloor, 1.5);
   assert.equal(new BingoV1(index, tuned, "swiss").phaseParams(twoBot).bidding.contestFloor, params.bidding.contestFloor);
 });
+
+test("pricier letters may take a bigger share of the coins (tierAllowance)", () => {
+  const flat = { ...params, pacing: { ...params.pacing, tierAllowance: [1, 1, 1, 1] } };
+  const tiered = { ...params, pacing: { ...params.pacing, tierAllowance: [1, 1, 2, 3] } };
+  // Early in the match the cap binds: AEINST + Z is a 48-point word, worth far more than the flat cap allows.
+  const s = stateAfter(5, "AEINST", 60);
+  const zFlat = new BingoV1(index, flat).bidTable(s)[L("Z")]!;
+  const zTiered = new BingoV1(index, tiered).bidTable(s)[L("Z")]!;
+  assert.ok(zTiered > zFlat, `Z: flat ${zFlat}, tiered ${zTiered}`);
+  // 1-point letters are unchanged.
+  assert.equal(new BingoV1(index, tiered).bidTable(s)[L("E")], new BingoV1(index, flat).bidTable(s)[L("E")]);
+});

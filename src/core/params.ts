@@ -38,8 +38,14 @@ export interface Params {
     rampDownAuctions: number;
     /** Reserve floor, in contested letters' worth of coins (PRD: ~3). */
     reserveLetters: number;
-    /** Most v1 pays for one letter: coins × min(1, spreadOver / auctions left), until the ramp-down. */
+    /** Most v1 pays for one letter: coins × min(1, spreadOver × allowance / auctions left), until the ramp-down. */
     spreadOver: number;
+    /**
+     * Allowance per price tier (1-point, 2–3, 4–5, 8–10): pricier letters may
+     * take a bigger share of the coins. Live, v1 won only 9–11% of 4–10 point
+     * letters, losing them by 8–12 coins, though its best games were built on them.
+     */
+    tierAllowance: number[];
   };
   bidding: {
     /** Least bid on any letter with value (unsold letters vanish). */
@@ -93,7 +99,7 @@ const SHAPE: Shape = {
     winRatePriorWeight: "number",
     coinValue: "number",
   },
-  pacing: { lambdaMax: "number", rampDownAuctions: "number", reserveLetters: "number", spreadOver: "number" },
+  pacing: { lambdaMax: "number", rampDownAuctions: "number", reserveLetters: "number", spreadOver: "number", tierAllowance: "numbers" },
   bidding: { minBid: "number", firstPriceMargin: "number", contestFloor: "number" },
   planner: { cashThreshold: "number", endgameLookahead: "number" },
   safety: { fallbackMs: "number", slowDecisionMs: "number" },

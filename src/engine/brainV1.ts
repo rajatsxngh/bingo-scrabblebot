@@ -61,9 +61,12 @@ export class BingoV1 implements Brain {
     const { values } = this.ev.letterValues(s.rack, ctx);
     const mu = Math.max(0.05, p.evaluator.coinValue * ctx.fade);
     const left = s.auctionsLeft;
-    // Spread coins over what's left; everything goes in the last few auctions.
-    const cap =
-      left <= p.pacing.rampDownAuctions ? s.coins : Math.floor(s.coins * Math.min(1, p.pacing.spreadOver / left));
+    // Spread coins over what's left (pricier letters get a bigger share);
+    // everything goes in the last few auctions.
+    const capFor = (tier: number) =>
+      left <= p.pacing.rampDownAuctions
+        ? s.coins
+        : Math.floor(s.coins * Math.min(1, (p.pacing.spreadOver * (p.pacing.tierAllowance[tier] ?? 1)) / left));
 
     let firstPriceCap = Number.POSITIVE_INFINITY;
     if (s.settings.auctionType === "FirstPrice") {
@@ -74,6 +77,7 @@ export class BingoV1 implements Brain {
 
     for (let l = 0; l < NUM_LETTERS; l++) {
       const tier = TIER_OF[l]!;
+      const cap = capFor(tier);
       const recent = s.prices.count[tier]! >= 3 ? s.prices.ema[tier]! : 0;
       const fromValue = Math.min(cap, Math.round(values[l]! / mu));
       let bid = Math.max(base[l]!, fromValue);

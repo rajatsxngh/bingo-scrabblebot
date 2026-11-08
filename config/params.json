@@ -15,7 +15,8 @@
     "lambdaMax": 3,
     "rampDownAuctions": 10,
     "reserveLetters": 3,
-    "spreadOver": 20
+    "spreadOver": 20,
+    "tierAllowance": [1, 1.2, 1.6, 2.4]
   },
   "bidding": {
     "minBid": 1,
@@ -35,7 +36,8 @@
     "bracket": {},
     "final": {
       "pacing": {
-        "spreadOver": 30
+        "spreadOver": 30,
+        "tierAllowance": [1, 1, 1, 1]
       },
       "bidding": {
         "contestFloor": 1
