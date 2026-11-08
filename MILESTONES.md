@@ -262,6 +262,18 @@ interface Brain {
 
 **Done when:** the gate passes, `control.json` is switched to `brain: v1`, and v1 has played 3+ live lobby matches with clean logs.
 
+**Result (Nov 7, ~8:30pm):**
+- **v1 as built:** it bids whichever is larger, the fallback's market-following bid or v ÷ μ under a pacing cap, and uses the PRD's safe rule in first-price auctions. It plays words like the fallback, plus a better endgame split (the top 25 opening words, each finished greedily).
+- **Gate:** passed, with 0 violations in 2,100 matches.
+  - Mixed Vickrey: **131.2** against the starter's 10.1, and v1 wins 79%.
+  - Live-like with the fallback at the table: **89.8** against 44.2.
+  - First-price: 75.8, clean.
+- **Head to head vs k13:** 163–313, and v1 wins 23% (the fallback won 0.2%). That's M7's job.
+- **Live:** v1 went live at 8:25pm. Match 45063 scored 51 (5th), match 45069 scored 94 (2nd, 11 coins left, p99 22 ms), and match 45075 scored 78 (3rd). That averages 74; the fallback averaged 31 live. All had 0 missed auctions, and no rejected calls since the fix below.
+- **Fixed during go-live:** no bid updates in the last 150 ms of a window. One arrived after the close and was refused.
+
+Details are in [docs/sim-baseline.md](docs/sim-baseline.md).
+
 ## M7 — Tuning for Swiss, bracket and final
 
 **Goal:** params tuned for how tonight is actually played: 6-bot Swiss tables, the bracket where last place is knocked out, and the 3-game head-to-head final.

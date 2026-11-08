@@ -106,6 +106,28 @@ test("a rejected word frees its letters", () => {
   assert.deepEqual(s.flush().words, ["OR"]);
 });
 
+test("no bid updates in the last 150 ms of a window (they'd arrive after the close)", () => {
+  let bid = 5;
+  const brain: Brain = {
+    name: "moving",
+    bidTable: () => new Int32Array(26).fill(bid),
+    planWords: () => [],
+  };
+  const s = newSession(brain);
+  let clock = 0;
+  const now = () => clock;
+  s.push({ type: "auctionOpened", auctionId: 1, letter: L("E") });
+  assert.equal(s.flush(now).bids[0]!.amount, 5);
+  bid = 8;
+  clock = 300; // mid-window: the update goes out
+  s.push({ type: "balanceChanged", bot: 2, coins: 90, score: 10 });
+  assert.equal(s.flush(now).bids[0]?.amount, 8);
+  bid = 12;
+  clock = 900; // 100 ms before the close: hold it
+  s.push({ type: "balanceChanged", bot: 2, coins: 80, score: 20 });
+  assert.equal(s.flush(now).bids.length, 0);
+});
+
 test("falls back when the brain throws", () => {
   const broken: Brain = {
     name: "broken",

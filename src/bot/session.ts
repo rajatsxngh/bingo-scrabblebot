@@ -50,6 +50,9 @@ export class Session {
    * sent again after a rack update, and the server refused it).
    */
   private pending: { word: string; at: number }[] = [];
+  /** The open auction we last saw, and when we first saw it open. */
+  private openedAuction = -1;
+  private openedAt = 0;
 
   constructor(
     start: MatchStart,
@@ -82,6 +85,13 @@ export class Session {
     const s = this.tracker.state;
     const bids: BidOrder[] = [];
     const cur = s.current;
+    if (cur && this.openedAuction !== cur.auctionId) {
+      this.openedAuction = cur.auctionId;
+      this.openedAt = t0;
+    }
+    // Late in the window an update can arrive after the close and be refused
+    // (seen live: a rival's word at the end of a window triggered one).
+    const lateInWindow = cur !== null && t0 - this.openedAt > s.settings.windowMs - 150;
 
     // Answer a new auction at once from the table we already have.
     if (cur && !s.ended && !this.lastBid.has(cur.auctionId) && this.table) {
@@ -94,7 +104,7 @@ export class Session {
       const sent = this.lastBid.get(cur.auctionId);
       if (sent === undefined) {
         this.bid(bids, cur.auctionId, cur.letter, amount, now() - t0, "first");
-      } else if (this.clamp(amount) !== sent) {
+      } else if (this.clamp(amount) !== sent && !lateInWindow) {
         this.bid(bids, cur.auctionId, cur.letter, amount, now() - t0, "update");
       }
     }

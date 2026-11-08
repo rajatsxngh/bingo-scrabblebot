@@ -20,6 +20,7 @@ import { NUM_LETTERS, letterIndex, matchSettings } from "../core/rules.js";
 import { deriveOpening } from "../core/tracker.js";
 import type { Brain, GameEvent } from "../core/types.js";
 import { wordIndex } from "../core/words.js";
+import { BingoV1 } from "../engine/brainV1.js";
 import { FallbackBrain } from "../engine/fallback.js";
 import { Control, type ControlSettings } from "./control.js";
 import { Log } from "./log.js";
@@ -67,6 +68,7 @@ function currentParams(): Params {
 }
 
 function makeBrain(name: string): Brain {
+  if (name === "v1") return new BingoV1(index, currentParams());
   if (name !== "fallback") log.flag("unknown brain, using fallback", { brain: name });
   return fallback;
 }

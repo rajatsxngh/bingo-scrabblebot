@@ -8,10 +8,16 @@ import type { Rng } from "../core/rng.js";
 import type { Brain, Counts, GameState } from "../core/types.js";
 import { bestWord, buildWordSet, canSpell, type WordIndex, type WordSet } from "../core/words.js";
 import { loadParams, type Params } from "../core/params.js";
+import { BingoV1 } from "../engine/brainV1.js";
 import { EvalBidBrain } from "../engine/evalbid.js";
 import { FallbackBrain, greedySplit } from "../engine/fallback.js";
 
 let cachedParams: Params | undefined;
+
+/** Bingo's params for this run: run.ts --params sets BINGO_PARAMS, and workers inherit it. */
+function bingoParams(): Params {
+  return (cachedParams ??= process.env.BINGO_PARAMS ? loadParams(process.env.BINGO_PARAMS) : loadParams());
+}
 
 /** A brain plus the two things only the simulator needs to know about it. */
 export interface SimBrain extends Brain {
@@ -334,6 +340,7 @@ export const PLAYER_TOKENS = [
   "bingo",
   "fallback",
   "evalbid",
+  "v1",
   "starter",
   "sim",
   "cheap",
@@ -349,16 +356,16 @@ export function isPlayerToken(t: string): t is PlayerToken {
   return (PLAYER_TOKENS as readonly string[]).includes(t);
 }
 
-/** Builds a fresh player for one match. "bingo" is Bingo's best brain so far (the fallback until M6). */
+/** Builds a fresh player for one match. "bingo" is Bingo's best brain so far (v1 since M6). */
 export function makePlayer(token: PlayerToken, index: WordIndex, rng: Rng): SimBrain {
   switch (token) {
-    case "bingo":
     case "fallback":
       return Object.assign(new FallbackBrain(index), { fastStart: true });
     case "evalbid":
-      // run.ts --params sets BINGO_PARAMS; workers inherit it.
-      cachedParams ??= process.env.BINGO_PARAMS ? loadParams(process.env.BINGO_PARAMS) : loadParams();
-      return Object.assign(new EvalBidBrain(index, cachedParams), { fastStart: true });
+      return Object.assign(new EvalBidBrain(index, bingoParams()), { fastStart: true });
+    case "bingo": // Bingo's best brain so far: v1 since it passed M6's gate
+    case "v1":
+      return Object.assign(new BingoV1(index, bingoParams()), { fastStart: true });
     case "starter":
       return new StarterBot(index);
     case "sim":

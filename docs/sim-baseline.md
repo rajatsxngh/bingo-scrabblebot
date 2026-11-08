@@ -51,3 +51,16 @@ What M5–M7 have to beat:
 - **Coins.** The fallback finishes Vickrey matches with 80+ coins unspent, and those are worthless at the end.
 - **Head to head.** Against a bid-on-everything rival, every letter it skips goes to the rival cheaply. M7's final mode has to contest them.
 - **Gate (M6).** v1 needs at least 2× the starter's score in mixed tables, zero invalid words and zero bids over the balance, and must beat the fallback. Before the fix in this commit, the fallback itself bid over its balance whenever it was broke.
+
+## Bingo v1 gate (M6)
+
+v1 bids whichever is larger: the fallback's market-following bid, or the evaluator's v ÷ μ under a pacing cap. In first-price auctions it caps bids at the richest rival's coins + 1 and at the recent price + 1. It plays words like the fallback, and splits the whole rack better during the last auction.
+
+| Table | v1 | Others | Gate |
+|---|---|---|---|
+| Mixed, Vickrey, 1,000 matches | **131.2**, wins 79.1%, place 1.27, 2.9 seven-plus words a match | k13 85.7, bron 78.2, tileshark 49.2, starter 10.1, sim 7.0 | 13× the starter ✅ |
+| Live-like with the fallback, Vickrey, 400 matches | **89.8**, wins 57.0% | fallback 44.2, k13 66–67, bron 58.9, tileshark 47.0 | Beats the fallback ✅ |
+| Mixed, first-price, 400 matches | **75.8**, wins 41.3% | k13 71.7, bron 63.8 | Clean ✅ |
+| Head to head vs k13, Vickrey, 300 matches | **163.1**, wins 23.3% | k13 313.1 | Not a gate. This is M7's target (the fallback won 0.2%). |
+
+There were 0 invalid words and 0 bids over the balance in all 2,100 matches. Head to head, v1 still finishes with 119 coins unspent while k13 takes 70% of the letters cheaply (5–12 coins each). The final needs its own params.
