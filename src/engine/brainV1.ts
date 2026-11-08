@@ -98,7 +98,9 @@ export class BingoV1 implements Brain {
       const fromValue = Math.min(cap, Math.round((values[l]! * boost) / mu));
       let bid = Math.max(base[l]!, fromValue);
       // Contest anything worth having at a fair share of the going price.
-      if (p.bidding.contestFloor > 0 && values[l]! > 0) {
+      // (Vickrey only: under first-price we pay our own bid, so a floor near
+      // the going price would overpay for letters we barely need.)
+      if (s.settings.auctionType === "Vickrey" && p.bidding.contestFloor > 0 && values[l]! > 0) {
         bid = Math.max(bid, Math.min(cap, Math.round(recent * p.bidding.contestFloor * boost)));
       }
       if (s.settings.auctionType === "FirstPrice") {

@@ -163,3 +163,23 @@ test("control.json parsing", () => {
   });
   assert.equal(parseControl({ lobby: "no" }).lobby, true);
 });
+
+test("control.json: keys left out keep their value, and a PowerShell BOM is ignored", async () => {
+  const { Control } = await import("../../src/bot/control.js");
+  const fs = await import("node:fs");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  // Omitted keys keep the current values instead of resetting to defaults.
+  const current = { ...DEFAULT_CONTROL, lobby: false, tournamentId: "9", brain: "v1" };
+  assert.deepEqual(parseControl({ tournamentId: 12 }, current), { ...current, tournamentId: "12" });
+  // A file written with a UTF-8 BOM still parses.
+  const file = path.join(os.tmpdir(), `bingo-control-${process.pid}.json`);
+  fs.writeFileSync(file, "﻿" + JSON.stringify({ lobby: false, tournamentId: 7 }));
+  let changed = 0;
+  const c = new Control(file, () => changed++, () => assert.fail("rejected a BOM file"));
+  assert.equal(c.current.lobby, false);
+  assert.equal(c.current.tournamentId, "7");
+  assert.equal(c.current.brain, "v1");
+  assert.equal(changed, 1);
+  fs.unlinkSync(file);
+});

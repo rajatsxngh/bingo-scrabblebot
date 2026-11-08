@@ -2,8 +2,11 @@
 // them never needs a restart (and never drops the connection).
 //   lobby         false = finish the current match, then stay connected and idle
 //   tournamentId  register for this tournament (null = unregister / none)
-//   brain         "fallback" now; "v1" once M6 lands. Switches between matches.
+//   brain         "v1" (or "fallback"). Switches between matches.
 //   params        path to the params file. Switches between matches.
+// A key left out of the file keeps its current value, and a UTF-8 byte-order
+// mark (PowerShell 5.1's Out-File writes one) is ignored, so an edit can never
+// silently reset the bot to defaults (lobby on, no tournament).
 
 import * as fs from "node:fs";
 
@@ -17,12 +20,13 @@ export interface ControlSettings {
 export const DEFAULT_CONTROL: ControlSettings = {
   lobby: true,
   tournamentId: null,
-  brain: "fallback",
+  brain: "v1",
   params: "config/params.json",
 };
 
-export function parseControl(json: unknown): ControlSettings {
-  const c = { ...DEFAULT_CONTROL };
+/** Settings from parsed JSON; keys the file leaves out keep their value in `base`. */
+export function parseControl(json: unknown, base: ControlSettings = DEFAULT_CONTROL): ControlSettings {
+  const c = { ...base };
   if (typeof json !== "object" || json === null) return c;
   const o = json as Record<string, unknown>;
   if (typeof o.lobby === "boolean") c.lobby = o.lobby;
@@ -55,7 +59,7 @@ export class Control {
   private read(initial: boolean) {
     let text: string;
     try {
-      text = fs.readFileSync(this.path, "utf8");
+      text = fs.readFileSync(this.path, "utf8").replace(/^﻿/, "");
     } catch {
       return;
     }
@@ -63,7 +67,7 @@ export class Control {
     this.raw = text;
     let next: ControlSettings;
     try {
-      next = parseControl(JSON.parse(text));
+      next = parseControl(JSON.parse(text), this.current);
     } catch {
       this.warn(`control.json isn't valid JSON; keeping the last settings`);
       return;

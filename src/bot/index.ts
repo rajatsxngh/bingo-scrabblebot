@@ -93,6 +93,8 @@ let flushScheduled = false;
 let rackDirty = false;
 /** Auctions we answered (or decided not to), across reconnect rebuilds. */
 const handled = new Set<number>();
+/** Last event from our running match, for the liveness watchdog. */
+let lastMatchEventAt = Date.now();
 const stats = { missed: 0, rejected: 0, bids: 0, slow: 0, decisionMs: [] as number[] };
 
 const num = (x: bigint) => Number(x);
@@ -122,6 +124,10 @@ function call(what: string, p: Promise<unknown>) {
 function openMatch(matchId: bigint) {
   if (!conn || me === null) return;
   if (live && live.matchId >= matchId) return;
+  // In a tournament the next match can start in the same transaction that
+  // ends ours, before our matchEnded event is processed. Close the old one
+  // properly (summary, stats reset) instead of dropping it.
+  if (live?.session) endMatch();
   live?.unsubscribe();
   const id = String(matchId);
   const handle = conn
@@ -153,6 +159,7 @@ function openMatch(matchId: bigint) {
 /** Build the session from the subscribed rows; runs on first apply and after every reconnect. */
 function rebuild(matchId: bigint) {
   if (!conn || me === null || !live || live.matchId !== matchId) return;
+  lastMatchEventAt = Date.now();
   const db = conn.db;
   const m = db.matchState.id.find(matchId);
   if (!m || m.status.tag !== "Running") {
@@ -279,6 +286,7 @@ function balanceEvent(p: ParticipantRow): GameEvent {
 /** Queue an event for our live match and flush once this transaction's callbacks are done. */
 function push(matchId: bigint, e: GameEvent | null) {
   if (!live?.session || live.matchId !== matchId) return;
+  lastMatchEventAt = Date.now();
   if (e) live.session.push(e);
   if (!flushScheduled) {
     flushScheduled = true;
@@ -412,6 +420,11 @@ function syncTournament() {
   if (!conn || me === null) return;
   const want = control.current.tournamentId;
   if (want === registeredFor) return;
+  // A typo must not poison registeredFor (BigInt would throw after it was set).
+  if (want !== null && !/^\d+$/.test(want)) {
+    log.flag("tournamentId must be digits only; not registering", { tournamentId: want });
+    return;
+  }
   if (registeredFor !== null) {
     const old = registeredFor;
     conn.reducers
@@ -474,6 +487,19 @@ function onConnect(c: DbConnection, identity: Identity, token: string) {
   });
   c.db.tournament.onUpdate((_ctx, o, t) => {
     if (o.status.tag !== t.status.tag) log.info(`tournament ${t.id}: ${o.status.tag} → ${t.status.tag}`);
+  });
+  c.db.tournament.onDelete((_ctx, t) => log.flag("tournament deleted", { tournament: t.id }));
+  // Our own entry: confirms registration, and says when it's gone or we're out.
+  c.db.tournamentEntry.onInsert((_ctx, e) => {
+    if (me !== null && e.botId === me) log.info(`registered: our entry in tournament ${e.tournamentId} is on the server`);
+  });
+  c.db.tournamentEntry.onUpdate((_ctx, o, e) => {
+    if (me !== null && e.botId === me && !o.eliminated && e.eliminated) {
+      log.flag("knocked out of the tournament", { tournament: e.tournamentId, swissPoints: e.swissPoints });
+    }
+  });
+  c.db.tournamentEntry.onDelete((_ctx, e) => {
+    if (me !== null && e.botId === me) log.flag("our tournament entry was removed", { tournament: e.tournamentId });
   });
 }
 
@@ -553,9 +579,31 @@ function main() {
       }
       setTimeout(() => process.exit(1), 500);
     })
-    .onDisconnect((_ctx, err?: Error) => log.flag("disconnected", { error: err?.message }))
+    .onDisconnect((_ctx, err?: Error, nextAttempt?: number, nextDelayMs?: number) => {
+      log.flag("disconnected", { error: err?.message, nextAttempt, nextDelayMs });
+      // The SDK gives up on some failures (e.g. WebSocket protocol errors) and
+      // schedules no retry. Staying alive then would leave a bot that's seated
+      // but never bids, and the keep-alive timer would hide it from the restart
+      // loop. Exit so scripts/live.ps1 starts a fresh connection.
+      if (nextAttempt === undefined) {
+        log.flag("no reconnect scheduled: exiting so the restart loop reconnects");
+        setTimeout(() => process.exit(1), 500);
+      }
+    })
     .build();
   setInterval(maybeJoinLobby, 5000).unref();
+  // Liveness: a running match sends events every auction window. If ours goes
+  // quiet (a silently dead socket, a dropped subscription), restart: the loop
+  // brings us back and the rebuild picks the match up from its rows.
+  setInterval(() => {
+    if (!live?.session || live.session.state.ended) return;
+    const quiet = Date.now() - lastMatchEventAt;
+    const limit = Math.max(15_000, 3 * live.session.state.settings.windowMs);
+    if (quiet > limit) {
+      log.flag("no events from our running match; restarting", { matchId: live.matchId, quietMs: quiet });
+      setTimeout(() => process.exit(1), 300);
+    }
+  }, 5000).unref();
   setInterval(() => {}, 1 << 30); // keep the process alive between matches
 }
 
