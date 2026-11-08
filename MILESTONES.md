@@ -314,6 +314,9 @@ Details are in [docs/sim-baseline.md](docs/sim-baseline.md).
   | Mixed, 400 matches | 129.2, wins 77% | **134.5, wins 82.5%** |
 
   Changing coinValue alone (0.5 or 0.8) did nothing useful. In the final, contesting at 1.5–2× the price dropped wins to 5–23%, so f2 stays. **Not done:** the bracket tweak (bracket matches use the Swiss params).
+- **From the live logs (~7:30pm):** v1 won only 9–11% of 4–10 point letters, losing them by 8–12 coins, though its best games were built on them.
+  - **Fix 1, `tournament-3`:** `pacing.tierAllowance` [1, 1.2, 1.6, 2.4] lets pricier letters take a bigger share of the cap. Live-like tables, 600 fresh matches: 92.0 and 72% wins, against 90.3 and 69%. Neutral head to head, so the final keeps a flat allowance.
+  - **Fix 2, `tournament-4`:** `pacing.slackShare` spends down excess coins. It was flat or slightly worse in 6-bot tables, so it's off there. In the final, which is decided by total score, 400 fresh matches gave margins of −31.8 against −35.3 vs k13 and −34.4 against −51.9 vs bron, so it's on for the final only.
 
 ## M8 — Rival model and first-price shading (only if tonight is first-price)
 
