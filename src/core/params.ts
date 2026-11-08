@@ -38,12 +38,20 @@ export interface Params {
     rampDownAuctions: number;
     /** Reserve floor, in contested letters' worth of coins (PRD: ~3). */
     reserveLetters: number;
+    /** Most v1 pays for one letter: coins × min(1, spreadOver / auctions left), until the ramp-down. */
+    spreadOver: number;
   };
   bidding: {
     /** Least bid on any letter with value (unsold letters vanish). */
     minBid: number;
     /** First-price: bid this much above the predicted top rival bid (PRD: 1). */
     firstPriceMargin: number;
+    /**
+     * Bid at least this fraction of the recent price for its tier on any
+     * letter worth something (0 = off). Head to head, a skipped letter goes
+     * to the rival for 1 coin, and a high losing bid drains the rival's coins.
+     */
+    contestFloor: number;
   };
   planner: {
     /** Extra value a word must show over holding its letters before we cash it. Placeholder. */
@@ -85,8 +93,8 @@ const SHAPE: Shape = {
     winRatePriorWeight: "number",
     coinValue: "number",
   },
-  pacing: { lambdaMax: "number", rampDownAuctions: "number", reserveLetters: "number" },
-  bidding: { minBid: "number", firstPriceMargin: "number" },
+  pacing: { lambdaMax: "number", rampDownAuctions: "number", reserveLetters: "number", spreadOver: "number" },
+  bidding: { minBid: "number", firstPriceMargin: "number", contestFloor: "number" },
   planner: { cashThreshold: "number", endgameLookahead: "number" },
   safety: { fallbackMs: "number", slowDecisionMs: "number" },
 };

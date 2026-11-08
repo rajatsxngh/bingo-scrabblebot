@@ -71,3 +71,17 @@ test("plays the whole rack during the last auction", () => {
   const s = stateAfter(67, "RETAINS");
   assert.deepEqual(v1.planWords(s).map((w) => w.length), [7]);
 });
+
+test("phase switching: 2-bot tables play as the final, a live phase overrides, Swiss otherwise", () => {
+  const tuned = { ...params, phases: { ...params.phases, final: { bidding: { contestFloor: 1.5 } } } };
+  const twoBot = (() => {
+    const settings = matchSettings({ auctionType: "Vickrey", numBots: 2 });
+    return new Tracker({ settings, me: 1, bots: [1, 2], opening: rackOf("AEIRT") }).state;
+  })();
+  const sixBot = stateAfter(0);
+  assert.equal(new BingoV1(index, tuned).phaseParams(twoBot).bidding.contestFloor, 1.5);
+  assert.equal(new BingoV1(index, tuned).phaseParams(sixBot).bidding.contestFloor, params.bidding.contestFloor);
+  // The tournament says "Final" (from tournament_match): final params even at a 6-bot table.
+  assert.equal(new BingoV1(index, tuned, "final").phaseParams(sixBot).bidding.contestFloor, 1.5);
+  assert.equal(new BingoV1(index, tuned, "swiss").phaseParams(twoBot).bidding.contestFloor, params.bidding.contestFloor);
+});

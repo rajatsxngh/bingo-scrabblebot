@@ -15,7 +15,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Identity } from "spacetimedb";
-import { loadParams, type Params } from "../core/params.js";
+import { loadParams, type Params, type Phase } from "../core/params.js";
 import { NUM_LETTERS, letterIndex, matchSettings } from "../core/rules.js";
 import { deriveOpening } from "../core/tracker.js";
 import type { Brain, GameEvent } from "../core/types.js";
@@ -67,8 +67,8 @@ function currentParams(): Params {
   return lastGoodParams;
 }
 
-function makeBrain(name: string): Brain {
-  if (name === "v1") return new BingoV1(index, currentParams());
+function makeBrain(name: string, phase?: Phase): Brain {
+  if (name === "v1") return new BingoV1(index, currentParams(), phase);
   if (name !== "fallback") log.flag("unknown brain, using fallback", { brain: name });
   return fallback;
 }
@@ -181,6 +181,11 @@ function rebuild(matchId: bigint) {
   }
 
   const params = currentParams();
+  // Tournament phase from tournament_match; lobby matches have none.
+  const tmRow = [...db.tournamentMatch.iter()].find((t) => t.matchId === matchId);
+  const phase: Phase | undefined = tmRow
+    ? (({ Swiss: "swiss", Bracket: "bracket", Final: "final" }) as const)[tmRow.phase.tag]
+    : undefined;
   const session = new Session(
     {
       settings,
@@ -188,7 +193,7 @@ function rebuild(matchId: bigint) {
       bots: participants.map((p) => num(p.botId)),
       opening: deriveOpening(rack, won, spent),
     },
-    makeBrain(control.current.brain),
+    makeBrain(control.current.brain, phase),
     fallback,
     index,
     params.tracker.priceAlpha,

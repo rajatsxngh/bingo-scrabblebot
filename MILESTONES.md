@@ -296,6 +296,18 @@ Details are in [docs/sim-baseline.md](docs/sim-baseline.md).
 - Phase switching is unit-tested with fake tournament rows.
 - The tuned params are live in lobby matches with clean logs.
 
+**Result (Nov 7, ~9:10pm), cut to the final, as the "what to drop" rules allow:**
+- **New knobs:** `pacing.spreadOver` and `bidding.contestFloor`. v1 picks params by phase: the live tournament_match phase if there is one, otherwise a 2-bot table is played as the final.
+- **Final head to head**, 150 matches each, same seeds:
+
+  | Variant | vs k13 | vs bron | vs tileshark |
+  |---|---|---|---|
+  | Before | wins 20% (−148) | 27% (−132) | 100% |
+  | **f2: spreadOver 30, contestFloor 1.0** | **48% (−45)** | **51% (−40)** | 100% |
+
+  Cheaper coins (coinValue 0.3–0.4) collapsed it to 4–19%, from overpaying. f2 is now `phases.final`.
+- **Swiss:** v1's defaults stand. They already win 79% of mixed tables and 57% of live-like ones. **Not done:** the bracket tweak, the 6-bot sweep, and the 35%/90% targets at 2,000/1,000 matches.
+
 ## M8 — Rival model and first-price shading (only if tonight is first-price)
 
 **Goal:** stop overpaying when the winner pays its own bid.

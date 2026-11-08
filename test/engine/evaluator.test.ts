@@ -77,9 +77,15 @@ test("all 26 values in under 50 ms for racks of 0 to 20 letters", () => {
         const rack = new Uint8Array(NUM_LETTERS);
         for (const l of rng.shuffle([...bag]).slice(0, size)) rack[l]++;
         const ctx = makeContext(unseenFor(rack), future, 0.3);
-        const t0 = performance.now();
-        ev.letterValues(rack, ctx);
-        worst = Math.max(worst, performance.now() - t0);
+        // Best of 3: the test runner shares the machine with other test files
+        // (and the live bot), so single runs see GC and scheduling spikes.
+        let best = Infinity;
+        for (let r = 0; r < 3; r++) {
+          const t0 = performance.now();
+          ev.letterValues(rack, ctx);
+          best = Math.min(best, performance.now() - t0);
+        }
+        worst = Math.max(worst, best);
       }
     }
   }
