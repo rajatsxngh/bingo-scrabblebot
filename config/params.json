@@ -15,12 +15,12 @@
     "lambdaMax": 3,
     "rampDownAuctions": 10,
     "reserveLetters": 3,
-    "spreadOver": 14
+    "spreadOver": 20
   },
   "bidding": {
     "minBid": 1,
     "firstPriceMargin": 1,
-    "contestFloor": 0
+    "contestFloor": 0.8
   },
   "planner": {
     "cashThreshold": 0,

@@ -306,7 +306,14 @@ Details are in [docs/sim-baseline.md](docs/sim-baseline.md).
   | **f2: spreadOver 30, contestFloor 1.0** | **48% (−45)** | **51% (−40)** | 100% |
 
   Cheaper coins (coinValue 0.3–0.4) collapsed it to 4–19%, from overpaying. f2 is now `phases.final`.
-- **Swiss:** v1's defaults stand. They already win 79% of mixed tables and 57% of live-like ones. **Not done:** the bracket tweak, the 6-bot sweep, and the 35%/90% targets at 2,000/1,000 matches.
+- **Swiss (sweep at ~7pm, once the real time was known):** six variants at 200 matches, then the best confirmed on new seeds. The new defaults are spreadOver 20 and contestFloor 0.8:
+
+  | Table | Before | New defaults |
+  |---|---|---|
+  | Live-like, 800 matches | 87.5, wins 67% | **91.4, wins 75%** |
+  | Mixed, 400 matches | 129.2, wins 77% | **134.5, wins 82.5%** |
+
+  Changing coinValue alone (0.5 or 0.8) did nothing useful. In the final, contesting at 1.5–2× the price dropped wins to 5–23%, so f2 stays. **Not done:** the bracket tweak (bracket matches use the Swiss params).
 
 ## M8 — Rival model and first-price shading (only if tonight is first-price)
 
