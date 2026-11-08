@@ -25,10 +25,10 @@ The bot keeps its token in `.token-<BOT_NAME>`, which git ignores. `BOT_NAME` de
 
 ### Running tonight
 
-The tournament build is the newest `tournament-*` git tag, currently `tournament-4`. Run it from its own checkout, so edits in the working tree can't reach it. Restart it with a loop that brings it back within 2 s of any exit:
+The tournament build is the newest `tournament-*` git tag, currently `tournament-5`. Run it from its own checkout, so edits in the working tree can't reach it. Restart it with a loop that brings it back within 2 s of any exit:
 
 ```bash
-git worktree add bingo-live tournament-4
+git worktree add bingo-live tournament-5
 cp .token-bingo control.json bingo-live/
 cd bingo-live && npm ci && powershell -ExecutionPolicy Bypass -File scripts\live.ps1
 ```
