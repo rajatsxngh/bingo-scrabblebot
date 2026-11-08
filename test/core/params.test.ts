@@ -4,7 +4,7 @@ import { loadParams, parseParams, paramsFor } from "../../src/core/params.js";
 
 test("config/params.json loads and has the PRD's values", () => {
   const p = loadParams();
-  assert.deepEqual(p.evaluator.targetWeights, [1, 0.5, 0.25]);
+  assert.deepEqual(p.evaluator.targetWeights, [1, 1, 1]);
   assert.equal(p.pacing.rampDownAuctions, 10);
   assert.equal(p.pacing.reserveLetters, 3);
   assert.equal(p.planner.endgameLookahead, 3);

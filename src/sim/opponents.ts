@@ -7,7 +7,11 @@ import { BAG_COUNTS, BAG_SIZE, IS_VOWEL, LETTER_VALUES, NUM_LETTERS, TIER_OF, ti
 import type { Rng } from "../core/rng.js";
 import type { Brain, Counts, GameState } from "../core/types.js";
 import { bestWord, buildWordSet, canSpell, type WordIndex, type WordSet } from "../core/words.js";
+import { loadParams, type Params } from "../core/params.js";
+import { EvalBidBrain } from "../engine/evalbid.js";
 import { FallbackBrain, greedySplit } from "../engine/fallback.js";
+
+let cachedParams: Params | undefined;
 
 /** A brain plus the two things only the simulator needs to know about it. */
 export interface SimBrain extends Brain {
@@ -329,6 +333,7 @@ export class SelectiveBot implements SimBrain {
 export const PLAYER_TOKENS = [
   "bingo",
   "fallback",
+  "evalbid",
   "starter",
   "sim",
   "cheap",
@@ -350,6 +355,10 @@ export function makePlayer(token: PlayerToken, index: WordIndex, rng: Rng): SimB
     case "bingo":
     case "fallback":
       return Object.assign(new FallbackBrain(index), { fastStart: true });
+    case "evalbid":
+      // run.ts --params sets BINGO_PARAMS; workers inherit it.
+      cachedParams ??= process.env.BINGO_PARAMS ? loadParams(process.env.BINGO_PARAMS) : loadParams();
+      return Object.assign(new EvalBidBrain(index, cachedParams), { fastStart: true });
     case "starter":
       return new StarterBot(index);
     case "sim":

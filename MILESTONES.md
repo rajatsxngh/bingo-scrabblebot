@@ -223,6 +223,15 @@ interface Brain {
 - All 26 values take under 50 ms in the worst case (aim for 10 ms typically) for racks of 0–20 letters.
 - If M4 is done, a throwaway brain that bids v(L), capped at its coins, beats the fallback brain in the simulator.
 
+**Result (Nov 7, ~8pm):**
+- **Passed:** speed (10–15 ms typical, 24 ms worst); S on RETAIN worth exactly 6 at the second-to-last auction; distinct-letter-set targets (87,962).
+- **Changed from the PRD:**
+  - The fixed 1 / 0.5 / 0.25 weights became a cascade. They over-counted overlapping targets: AEINST was worth 32 and its completers about 2.
+  - Missing letters are costed at recent prices times a fading `coinValue`.
+  - A bid is v ÷ μ, where μ is what a coin is worth in points (fading to 0). The PRD's v ÷ (1 + λ) assumes leftover money has value, and here it has none.
+- **The PRD's two Scrabble checks don't hold here.** Q, Z, X and J make big words (AEINST + Q is one U from ANTIQUES, 51 points), and live prices agree (about 27 for those, 10 for 1-point letters).
+- **The sim check failed:** evalbid scored 47–49 against the fallback's 66–69 in live-like tables. The evaluator values a letter by the current rack's targets, so it misses the volume value of cheap common letters (the fallback wins 18% of auctions and plays about 3 words a match). M6 therefore bids max(the fallback's market-following bid, v ÷ μ).
+
 ## M6 — Bingo v1 passes its gate and goes live
 
 **Goal:** the full v1 brain, built on the evaluator, proven in the simulator and then playing live.

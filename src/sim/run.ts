@@ -42,6 +42,9 @@ const spec: MatchSpec = {
   slowStart: Number(arg("slow", "0.1")),
 };
 const jsonPath = arg("json", "");
+// Bingo's params file for this run (default config/params.json); workers inherit it.
+const paramsPath = arg("params", "");
+if (paramsPath) process.env.BINGO_PARAMS = paramsPath;
 
 async function main() {
   const t0 = performance.now();

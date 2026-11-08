@@ -15,7 +15,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Identity } from "spacetimedb";
-import { loadParams } from "../core/params.js";
+import { loadParams, type Params } from "../core/params.js";
 import { NUM_LETTERS, letterIndex, matchSettings } from "../core/rules.js";
 import { deriveOpening } from "../core/tracker.js";
 import type { Brain, GameEvent } from "../core/types.js";
@@ -44,6 +44,26 @@ function loadToken(): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+let lastGoodParams: Params | null = null;
+
+/**
+ * The params file, re-read at each match. A file that doesn't validate (a
+ * half-saved edit, or a key this build doesn't know) keeps the last good
+ * params instead of throwing: live, a new key in params.json once crashed the
+ * bot mid-lobby.
+ */
+function currentParams(): Params {
+  try {
+    lastGoodParams = loadParams(path.join(ROOT, control.current.params));
+  } catch (err) {
+    log.flag("params file rejected, keeping the last good params", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    if (!lastGoodParams) throw err;
+  }
+  return lastGoodParams;
 }
 
 function makeBrain(name: string): Brain {
@@ -158,7 +178,7 @@ function rebuild(matchId: bigint) {
     for (const c of w.word) spent[letterIndex(c)]++;
   }
 
-  const params = loadParams(path.join(ROOT, control.current.params));
+  const params = currentParams();
   const session = new Session(
     {
       settings,
@@ -488,7 +508,13 @@ function onBaseApplied() {
 }
 
 function main() {
+  // Last resort: a bug in a callback must not take the bot offline (an
+  // offline bot loses every auction). Log it and keep going.
+  process.on("uncaughtException", (err) => log.flag("uncaught error", { error: err.stack ?? String(err) }));
+  process.on("unhandledRejection", (err) => log.flag("unhandled rejection", { error: String(err) }));
   control = new Control(CONTROL_PATH, applyControl, (msg) => log.flag(msg));
+  // Load params now, so a bad file is caught at startup rather than mid-match.
+  currentParams();
   const token = process.env.BOT_TOKEN ?? loadToken();
   // PROBE=1 connects anonymously to time the subscriptions, then exits.
   if (!token && !process.env.PROBE) {

@@ -12,7 +12,7 @@ export interface Params {
     priceAlpha: number;
   };
   evaluator: {
-    /** Weights for the best few target words, best first (PRD: 1, 0.5, 0.25). */
+    /** Weight of each step in the cascade of best targets (each counts only if the ones above fail). The PRD had fixed 1, 0.5, 0.25 on a plain sum; see evaluator.ts. */
     targetWeights: number[];
     /** Skip targets missing more tiles than this. Placeholder. */
     maxDeficit: number;
@@ -24,6 +24,12 @@ export interface Params {
     winRatePrior: number;
     /** How many auctions' worth of weight the prior carries. Placeholder. */
     winRatePriorWeight: number;
+    /**
+     * Points a coin is worth when a target's missing letters are costed at
+     * recent prices (it fades to 0 as the match ends: leftover coins are
+     * worthless). 1 = full price, 0 = letters are free. Placeholder.
+     */
+    coinValue: number;
   };
   pacing: {
     /** Largest pacing factor λ, used when coins are scarcest. Placeholder. */
@@ -77,6 +83,7 @@ const SHAPE: Shape = {
     vowelPenalty: "number",
     winRatePrior: "number",
     winRatePriorWeight: "number",
+    coinValue: "number",
   },
   pacing: { lambdaMax: "number", rampDownAuctions: "number", reserveLetters: "number" },
   bidding: { minBid: "number", firstPriceMargin: "number" },

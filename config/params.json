@@ -3,12 +3,13 @@
     "priceAlpha": 0.25
   },
   "evaluator": {
-    "targetWeights": [1, 0.5, 0.25],
+    "targetWeights": [1, 1, 1],
     "maxDeficit": 5,
     "duplicatePenalty": 1,
     "vowelPenalty": 1,
-    "winRatePrior": 0.3,
-    "winRatePriorWeight": 5
+    "winRatePrior": 0.7,
+    "winRatePriorWeight": 20,
+    "coinValue": 0.6
   },
   "pacing": {
     "lambdaMax": 3,
