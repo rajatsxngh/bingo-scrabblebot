@@ -23,6 +23,18 @@ In PowerShell, use `$env:BOT_TOKEN="<token>"; npm start`. You can also paste the
 
 The bot keeps its token in `.token-<BOT_NAME>`, which git ignores. `BOT_NAME` defaults to `bingo`, so later runs need only `npm start`. The token is the long one shown under "Token — save this", not the 64-character identity above it.
 
+### Running tonight
+
+The tournament build is the `tournament` git tag. Run it from its own checkout, so edits in the working tree can't reach it. Restart it with a loop that brings it back within 2 s of any exit:
+
+```bash
+git worktree add bingo-live tournament
+cp .token-bingo control.json bingo-live/
+cd bingo-live && npm ci && powershell -ExecutionPolicy Bypass -File scripts\live.ps1
+```
+
+On Linux, use `./scripts/live.sh` instead of the PowerShell script. After a crash or kill the bot reconnects, rebuilds the current match from the tables, and keeps bidding; in the drill it lost 1 auction. Keep the machine on power, with sleep off.
+
 ### Switches
 
 While the bot runs, edit `control.json` (created on first run, and ignored by git). Changes take effect within 2 seconds, without a restart:

@@ -11,3 +11,6 @@ node_modules/
 dist/
 logs/
 *.log
+
+# The frozen tournament checkout (git worktree of the `tournament` tag).
+bingo-live/
